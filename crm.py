@@ -1,5 +1,6 @@
 from tkinter import *
 import mysql.connector
+import csv
 
 root = Tk()
 root.title("CRM")
@@ -76,7 +77,7 @@ def clear_fields():
     discount_code_box.delete(0, END)
     price_paid_box.delete(0, END)
 
-#add customer to bd
+#add customer to db
 def add_customer():
     sql_command = "INSERT INTO customers (\
                         first_name,\
@@ -119,6 +120,61 @@ def add_customer():
     #clear fields
     clear_fields()
 
+#write to csv function
+def write_to_csv(result):
+    with open("exports/customers.csv", "a", newline="") as f:
+        w = csv.writer(f, dialect="excel")
+        for record in result:
+            w.writerow(record)
+
+#list customers
+def list_customers():
+    list_cutomer_query = Tk()
+    list_cutomer_query.title("List All Customers")
+    list_cutomer_query.geometry("800x600")
+
+    #query the database
+    my_cursor.execute("SELECT * FROM customers")
+    result = my_cursor.fetchall()
+    
+    for index, x in enumerate(result):
+        num=0
+        for y in x:
+            lookup_label = Label(list_cutomer_query, text=y)
+            lookup_label.grid(row=index, column=num)
+            num +=1
+    
+    csv_button = Button(list_cutomer_query, text="Export as csv", command=lambda: write_to_csv(result))
+    csv_button.grid(row=index+1, column=0)
+
+#search customers function
+def search_customers():
+    search_customers = Tk()
+    search_customers.title("Search All Customers")
+    search_customers.geometry("800x600")
+
+    def search_now():
+        searched = search_box.get()
+        sql = "SELECT * FROM customers WHERE last_name = %s" #%s is a place holder value
+        name = (searched, ) #name will fill the placeholder. Coma as this must be a tuple
+        result = my_cursor.execute(sql, name)
+        result = my_cursor.fetchall()
+
+        if not result:
+            result = "Record not found"
+
+        searched_label = Label(search_customers, text=result)
+        searched_label.grid(row=2, column=0, padx=10)
+
+    #entry box for customer search
+    search_box = Entry(search_customers)
+    search_box.grid(row=0, column=1, padx=10, pady=10)
+    #entry box label
+    search_box_label = Label(search_customers, text="Search Customer by Last Name")
+    search_box_label.grid(row=0, column=0, padx=10, pady=10)
+    #entry box search button
+    search_button = Button(search_customers, text="Search Customers", command=search_now)
+    search_button.grid(row=1, column=0, padx=10, pady=10)
 
 #create a label
 title_label = Label(root, text="Company Customer Database", font=("Helvetica, 16"))
@@ -135,9 +191,9 @@ zipcode_label = Label(root, text="Zipcode").grid(row=7, column=0, sticky=W, padx
 country_label = Label(root, text="Country").grid(row=8, column=0, sticky=W, padx=10)
 phone_label = Label(root, text="Phone Number").grid(row=9, column=0, sticky=W, padx=10)
 email_label = Label(root, text="Email").grid(row=10, column=0, sticky=W, padx=10)
-payment_method_label = Label(root, text="Payment Method").grid(row=12, column=0, sticky=W, padx=10)
-discount_code_label = Label(root, text="Discount Code").grid(row=13, column=0, sticky=W, padx=10)
-price_paid_label = Label(root, text="Price Paid").grid(row=14, column=0, sticky=W, padx=10)
+payment_method_label = Label(root, text="Payment Method").grid(row=11, column=0, sticky=W, padx=10)
+discount_code_label = Label(root, text="Discount Code").grid(row=12, column=0, sticky=W, padx=10)
+price_paid_label = Label(root, text="Price Paid").grid(row=13, column=0, sticky=W, padx=10)
 
 #create entry boxes
 first_name_box = Entry(root)
@@ -171,25 +227,28 @@ email_box = Entry(root)
 email_box.grid(row=10,column=1,pady=5)
 
 payment_method_box = Entry(root)
-payment_method_box.grid(row=12,column=1,pady=5)
+payment_method_box.grid(row=11,column=1,pady=5)
 
 discount_code_box = Entry(root)
-discount_code_box.grid(row=13,column=1,pady=5)
+discount_code_box.grid(row=12,column=1,pady=5)
 
 price_paid_box = Entry(root)
-price_paid_box.grid(row=14,column=1,pady=5)
+price_paid_box.grid(row=13,column=1,pady=5)
 
 #create buttons
 add_customer_button = Button(root, text="Add Customer To Database", command=add_customer)
-add_customer_button.grid(row=15, column=0, padx=10, pady=10)
+add_customer_button.grid(row=14, column=0, padx=10, pady=10)
 
 clear_fields_button = Button(root, text="Clear Fields", command=clear_fields)
-clear_fields_button.grid(row=15, column=1, padx=10, pady=10)
+clear_fields_button.grid(row=14, column=1, padx=10, pady=10)
 
-my_cursor.execute("SELECT * FROM customers")
-result = my_cursor.fetchall()
-for x in result:
-    print(x)
+list_customers_btn = Button(root, text="List Customers", command=list_customers)
+list_customers_btn.grid(row=15, column=0, sticky=W, padx=10)
+
+search_customers_button = Button(root, text="Search Customers", command=search_customers)
+search_customers_button.grid(row=15, column=1, sticky=W, padx=10)
+
+
 
 
 root.mainloop()
