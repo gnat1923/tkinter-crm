@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import ttk
 import mysql.connector
 import csv
 
@@ -145,7 +146,7 @@ def list_customers():
             num +=1
     
     csv_button = Button(list_cutomer_query, text="Export as csv", command=lambda: write_to_csv(result))
-    csv_button.grid(row=index+1, column=0)
+    csv_button.grid(row=index+1, column=0, padx=10)
 
 #search customers function
 def search_customers():
@@ -153,9 +154,23 @@ def search_customers():
     search_customers.title("Search All Customers")
     search_customers.geometry("800x600")
 
+    searched_label = None
+
     def search_now():
+        nonlocal searched_label  # Access the searched_label defined in the outer scope
+        selected = drop.get()
+        if selected == "Search by...":
+            search_by_error = Label(search_customers, text="Please pick a search criteria!")
+            search_by_error.grid(row=3, column=0)
+        elif selected == "Last Name":
+            sql = "SELECT * FROM customers WHERE last_name = %s"
+        elif selected == "Email Address":
+            sql = "SELECT * FROM customers WHERE email = %s"
+        elif selected == "Customer ID":
+            sql = "SELECT * FROM customers WHERE user_id = %s"
+        
         searched = search_box.get()
-        sql = "SELECT * FROM customers WHERE last_name = %s" #%s is a place holder value
+        #sql = "SELECT * FROM customers WHERE last_name = %s" #%s is a place holder value
         name = (searched, ) #name will fill the placeholder. Coma as this must be a tuple
         result = my_cursor.execute(sql, name)
         result = my_cursor.fetchall()
@@ -163,18 +178,25 @@ def search_customers():
         if not result:
             result = "Record not found"
 
+        if searched_label:
+            searched_label.destroy()
         searched_label = Label(search_customers, text=result)
-        searched_label.grid(row=2, column=0, padx=10)
+        searched_label.grid(row=2, column=0, padx=10, columnspan=3) 
 
     #entry box for customer search
     search_box = Entry(search_customers)
     search_box.grid(row=0, column=1, padx=10, pady=10)
     #entry box label
-    search_box_label = Label(search_customers, text="Search Customer by Last Name")
+    search_box_label = Label(search_customers, text="Search")
     search_box_label.grid(row=0, column=0, padx=10, pady=10)
     #entry box search button
     search_button = Button(search_customers, text="Search Customers", command=search_now)
     search_button.grid(row=1, column=0, padx=10, pady=10)
+    #create dropdown box
+    drop = ttk.Combobox(search_customers, value=["Search by...","Last Name", "Email Address", "Customer ID"])
+    drop.current(0) #this sets the default value of the dropdown
+    drop.grid(row=0, column=2)
+
 
 #create a label
 title_label = Label(root, text="Company Customer Database", font=("Helvetica, 16"))
